@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #-x
 
 # @@D 17.10.13
@@ -58,9 +58,6 @@ done
 # Get the reamining arguments
 shift $(($OPTIND -1))
 REM_ARGS=$*
-
-echo "REM ARGS: $REM_ARGS"
-echo "IDS FILE: $IDS_FILE"
 
 if [ ! -d "$OUT_DIR" ]; then
     echo "Output directory provide by option '-d' does not exist or is not writable!"
