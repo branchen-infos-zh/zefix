@@ -11,6 +11,21 @@
    [clojure.contrib.string :as ccstring]))
 
 ;; Utility functions
+(defn- write-file
+  "Writes all ids to a file."
+  [data file]
+  (let [f (io/file file)]
+    (log/debug "Writing ids to" (.getAbsolutePath f))
+    ;; Make sure parent dir exists
+    (-> f
+        (.getAbsoluteFile)
+        (.getParentFile)
+        (.mkdirs))
+    (with-open [wrtr (io/writer f)]
+      (dorun
+       (map #(do (.write wrtr (str % "\n")))
+            data)))))
+
 (defn- write-stdout
   "Prints data to stdout"
   [data]
@@ -66,15 +81,15 @@
   (let [files (filter #(.endsWith (.getName %) "xml")
                         (file-seq (io/file folder)))
         data '(a b c d)]
-    (if (not out-file)
-      (print-stdout data)
-      (write-file data out-file))
-    out))
+    (if out-file
+      (write-file data out-file)
+      (write-stdout data))
+    data))
 
 (defn -main
   "Main application entry point."
   [& args]
-  (log/info "Starting opendata...")
+  (log/debug "Starting zefxmx...")
   (let [[options args banner]
         (cli args
              "Zefix xml to json converter."
@@ -82,6 +97,7 @@
              ["-o" "File where to store the results. Defaults to stdout."]
              ["-h" "--help" "Shows this help" :flag true])]
     (cond
-     (or (:help options) (println banner)
+     (:help options) (println banner)
      :else (process-folder (:i options)
-                           (:o options)))))
+                           (:o options))))
+  (log/debug "Stopping zefxmx..."))
