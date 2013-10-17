@@ -1,4 +1,5 @@
 (ns zefxmx
+  (:gen-class)
   (:require
    [net.cgrand.enlive-html :as html]
    [clojure.tools.logging :as log]
@@ -8,6 +9,12 @@
    [clojure.string :as str]
    [clojure.math.numeric-tower :as math]
    [clojure.contrib.string :as ccstring]))
+
+;; Utility functions
+(defn- write-stdout
+  "Prints data to stdout"
+  [data]
+  (dorun (map #(println %) data)))
 
 ;; The following function are a shortcut for enlive functions
 (defn- select
@@ -55,10 +62,14 @@
      :addresses addresses}))
 
 (defn process-folder
-  [folder]
+  [folder out-file]
   (let [files (filter #(.endsWith (.getName %) "xml")
-                        (file-seq (io/file folder)))]
-    files))
+                        (file-seq (io/file folder)))
+        data '(a b c d)]
+    (if (not out-file)
+      (print-stdout data)
+      (write-file data out-file))
+    out))
 
 (defn -main
   "Main application entry point."

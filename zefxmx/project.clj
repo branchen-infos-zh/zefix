@@ -6,7 +6,7 @@
                  [enlive "1.1.4"]
                  [org.clojure/tools.cli "0.2.4"]
                  [org.clojure/math.numeric-tower "0.0.2"]
-                 
+
                  ;; Logging
                  [org.clojure/tools.logging "0.2.6"]
                  [ch.qos.logback/logback-classic "1.0.9"]]
@@ -21,5 +21,5 @@
   :compile-path "target/classes"
   ;:native-path "src/native"
   :target-path "target/"
-  :jar-name "zefdx.jar"
-  :uberjar-name "zefdx-standalone.jar")
+  :jar-name "zefxmx.jar"
+  :uberjar-name "zefxmx-standalone.jar")

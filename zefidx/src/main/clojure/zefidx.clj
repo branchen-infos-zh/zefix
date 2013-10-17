@@ -38,7 +38,7 @@
   "http://search.powernet.ch/webservices/net/Zefix/Zefix.asmx/SearchFirm?amt=20&name=_%s_%%20&suche_nach=bisherig&rf=%s&sitz=&id=&language=1&phonetisch=no&suche_nache=&suffix=&posMin=%s")
 
 ;; Utility functions
-(defn- write-file-ch-ids
+(defn- write-file
   "Writes all ids to a file."
   [data file]
   (let [f (io/file file)]
@@ -53,7 +53,7 @@
        (map #(do (.write wrtr (str % "\n")))
             data)))))
 
-(defn- print-data
+(defn- write-stdout
   "Prints data to stdout"
   [data]
   (dorun (map #(println %) data)))
@@ -86,7 +86,7 @@
   []
   (pp/print-table *zefix-rechtsformen*))
 
-(defn- extract-zh-ch-ids
+(defn- extract-zh-comp-ids
   "Extract the ids from a ZH zefix request."
   [word rf num]
   ;; Check num. Zefix returns 1000 entries per page
@@ -100,14 +100,14 @@
                                                :> (html/nth-child 2) :> html/text-node]}))
                         (gen-range num))))))
 
-(defn query-ch-ids
+(defn query-comp-ids
   "Query swiss company numbers from zefix."
   [word num rf out-file]
   (log/info "Querying data [word: " word ", rf: " rf ", num: " num "]")
-  (let [ch-ids (extract-zh-ch-ids word rf num)]
+  (let [comp-ids (extract-zh-comp-ids word rf num)]
     (if out-file
-      (write-file-ch-ids ch-ids out-file)
-      (print-data ch-ids))))
+      (write-file comp-ids out-file)
+      (write-stdout comp-ids))))
 
 (defn -main
   "Main application entry point."
@@ -127,9 +127,9 @@
      ;; List Rechtsformen
      (:list-rf options) (list-rechtsformen)
      ;; Check whether we've got all information to
-     ;; query ch-ids and then do so.
+     ;; query comp-ids and then do so.
      (nil? (:p options)) (println banner)
-     :else (query-ch-ids (:p options)
+     :else (query-comp-ids (:p options)
                          (:n options)
                          (:r options)
                          (:o options))))

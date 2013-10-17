@@ -1,5 +1,4 @@
-#!/bin/bash
-#-x
+#!/bin/sh
 
 PRG_NAME=${0##*/}
 PRG_NAME2=${PRG_NAME%.*}
