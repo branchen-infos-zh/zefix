@@ -86,6 +86,7 @@ for id in $ids ; do
     url=`printf $ZEFIX_URL $id`
     out_file="$OUT_DIR/$id.xml"
     echo "Fetching xml for $id to $out_file..."
-    echo " > $url"
-    echo "$CURL_BIN --progress-bar $url -o $out_file"
+    #echo " > $url"
+    #echo "$CURL_BIN --progress-bar $url -o $out_file"
+    $CURL_BIN --progress-bar "$url" -o "$out_file"
 done
