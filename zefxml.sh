@@ -32,9 +32,14 @@ function usage {
     printf "%s -o output-directory [-i comp-ids-file] [args]\n" $PRG_NAME
     echo " Fetches Handelsregister excerpts as xml for a list of company ids from a"
     echo " file, if -i was provided, or, from the argument list, if option -i was"
-    echo " omitted. Outputs to the directory provided by -o."
-    exit 2
+    echo " omitted. Writes files to the directory provided by -o."
+    exit 1;
 }
+
+# Make sure user provided arguments
+if [[ $# -lt 1 ]]; then
+    echo "Missing arguments. Type '$PRG_NAME -h' for help!"
+fi
 
 # First ':' -> omit getopts error messages
 while getopts :o:i:h name
@@ -54,17 +59,20 @@ done
 shift $(($OPTIND -1))
 REM_ARGS=$*
 
-if [[ ! -z "$iflag" && ! -z "$REM_ARGS" ]] \
-    || [[ -z "$REM_ARGS" && ! -f "$IDS_FILE" ]]; then
-    echo "Invalid combination of arguments! Either the ids file '$IDS_FILE' does"
-    echo "not exist or both, arguments and ids file was provided."
-    echo "Type '$PRG_NAME -h' for help."
+echo "REM ARGS: $REM_ARGS"
+echo "IDS FILE: $IDS_FILE"
+
+if [ ! -d "$OUT_DIR" ]; then
+    echo "Output directory provide by option '-d' does not exist or is not writable!"
     echo "Aborting..."
     exit 1
 fi
 
-if [ ! -d "$OUT_DIR" ]; then
-    echo "Output directory '$OUT_DIR' does not exist or is not writable!"
+if [[ ! -z "$iflag" && ! -z "$REM_ARGS" ]] \
+    || [[ -z "$REM_ARGS" && ! -f "$IDS_FILE" ]]; then
+    echo "Invalid combination of arguments: Either no ids were provided, the ids"
+    echo "file provided by option '-i' does not exist, or both, arguments and"
+    echo "ids file, were provided, or no ids. Type '$PRG_NAME -h' for help."
     echo "Aborting..."
     exit 1
 fi
