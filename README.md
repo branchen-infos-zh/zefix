@@ -7,9 +7,9 @@ Open Data hacknights in late 2013, see http://make.opendata.ch/wiki/project:biz.
 
 Scripts
 ---
-zefidx.sh   Retrieves company ids from the zefix webservice.
-zefxml.sh   Fetches a Handelsregister Eintrag from the zefix webservice.
-zefxmx.sh   Convert a zefix xml (or a folder thereof) to json.
+- zefidx.sh   Retrieves company ids from the zefix webservice.
+- zefxml.sh   Fetches a Handelsregister Eintrag from the zefix webservice.
+- zefxmx.sh   Convert a zefix xml (or a folder thereof) to json.
 
 Recommended workflow
 ---
