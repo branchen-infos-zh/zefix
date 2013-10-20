@@ -6,6 +6,7 @@
                  [enlive "1.1.4"]
                  [org.clojure/tools.cli "0.2.4"]
                  [org.clojure/math.numeric-tower "0.0.2"]
+                 [cheshire "5.2.0"]
 
                  ;; Logging
                  [org.clojure/tools.logging "0.2.6"]

@@ -39,6 +39,7 @@ function usage {
 # Make sure user provided arguments
 if [[ $# -lt 1 ]]; then
     echo "Missing arguments. Type '$PRG_NAME -h' for help!"
+    exit 1;
 fi
 
 # First ':' -> omit getopts error messages

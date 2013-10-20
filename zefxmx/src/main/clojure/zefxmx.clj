@@ -1,7 +1,9 @@
 (ns zefxmx
   (:gen-class)
   (:require
+   [zefxmx.nogacat :as n]
    [net.cgrand.enlive-html :as html]
+   [cheshire.core :as ch]
    [clojure.tools.logging :as log]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
@@ -9,6 +11,9 @@
    [clojure.string :as str]
    [clojure.math.numeric-tower :as math]
    [clojure.contrib.string :as ccstring]))
+
+(def noga-cats-compiled
+  (n/compile-noga-cats n/*noga-cat-2008*))
 
 ;; Utility functions
 (defn- write-file
@@ -31,6 +36,14 @@
   [data]
   (dorun (map #(println %) data)))
 
+(defn- read-file
+  [file]
+  (html/html-resource file))
+
+(defn- ->json
+  [data]
+  (ch/generate-string data))
+
 ;; The following function are a shortcut for enlive functions
 (defn- select
   [dom selector]
@@ -48,39 +61,55 @@
   [xml & rest]
   (select xml (inst 1 rest)))
 
+(defn- current-addr?
+  "Checks whether the address node is the currently active address."
+  [addr-node]
+  (= "1" (get-in addr-node [:attrs :status])))
+
 (defn- extract-addresses
   [xml]
   (let [addresses (html/select xml [:instances :addresses :address])]
     (mapv (fn [xmlp]
-           {:text (html/select xmlp [:addressText html/text-node])
-            :street (html/select xmlp [:addressDetails :street html/text-node])
-            :street-no (html/select xmlp [:addressDetails :buildingNum html/text-node])
-            :zip (html/select xmlp [:addressDetails :zip html/text-node])
-            :city (html/select xmlp [:addressDetails :city html/text-node])})
+           {:text (select xmlp [:addressText html/text-node])
+            :street (select xmlp [:addressDetails :street html/text-node])
+            :street-no (select xmlp [:addressDetails :buildingNum html/text-node])
+            :zip (select xmlp [:addressDetails :zip html/text-node])
+            :city (select xmlp [:addressDetails :city html/text-node])
+            :current (current-addr? xmlp)
+            })
          addresses)))
 
-(defn extract-details
+(defn extract-xml-details
   "Extracts the relevant details from a zefix xml."
-  [ch-id xml]
+  [xml]
   (let [canton "ZH"
+        comp-id (inst-text-node xml :heading :identification :CHNum)
         name (inst-text-node xml :rubrics :names (child 1) :native)
         legal-form (inst-text-node xml :heading :legalForm)
-        ;;[:instances :instance :heading :legalFormText html/text-node]})
-        inscr-date (inst-text-node :heading :inscriptionDate)
-        purpose (inst-text-node :rubrics :purposes (child 1))
-        addresses (extract-addresses xml)]
-    {:ch-id ch-id
+        inscr-date (inst-text-node xml :heading :inscriptionDate)
+        purpose (inst-text-node xml :rubrics :purposes (child 1))
+        addresses (extract-addresses xml)
+        noga (n/noga-cat purpose noga-cats-compiled)]
+    {:comp-id comp-id
      :name name
      :legal-form legal-form
-     :inscriptionDate inscr-date
+     :inscription-date inscr-date
      :purpose purpose
-     :addresses addresses}))
+     :addresses addresses
+     :noga noga}))
+
+(defn process-file
+  [file]
+  (let [xml (read-file file)
+        out (extract-xml-details xml)]
+    out))
 
 (defn process-folder
   [folder out-file]
   (let [files (filter #(.endsWith (.getName %) "xml")
                         (file-seq (io/file folder)))
-        data '(a b c d)]
+        data (->json (mapv #(process-file %)
+                             files))]
     (if out-file
       (write-file data out-file)
       (write-stdout data))

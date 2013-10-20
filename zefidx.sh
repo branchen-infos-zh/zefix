@@ -44,6 +44,11 @@ do
     esac
 done
 
+if [ -z "$PATTERN" ]; then
+    echo "Pattern required (option '-p'). Aborting..."
+    exit 1
+fi
+
 #echo $JAVA_CMD -o \""$OUT_FILE"\" -p \""$PATTERN"\" -r \""$RECHTSF"\" -n "$NUM"
-$JAVA_CMD -o "$OUT_FILE" -p \""$PATTERN"\" -r \""$RECHTSF"\" -n "$NUM"
+$JAVA_CMD -o "$OUT_FILE" -p "$PATTERN" -r "$RECHTSF" -n "$NUM"
 

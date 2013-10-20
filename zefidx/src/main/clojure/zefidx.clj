@@ -56,7 +56,7 @@
 (defn- write-stdout
   "Prints data to stdout"
   [data]
-  (dorun (map #(println %) data)))
+  (dorun (map println data)))
 
 (defn- fetch-url
   "Retrieves handelregister data from zefix."
@@ -128,7 +128,7 @@
      (:list-rf options) (list-rechtsformen)
      ;; Check whether we've got all information to
      ;; query comp-ids and then do so.
-     (nil? (:p options)) (println banner)
+     (empty? (:p options)) (println banner)
      :else (query-comp-ids (:p options)
                          (:n options)
                          (:r options)
