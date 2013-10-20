@@ -1,17 +1,6 @@
 #!/bin/sh
 #-x
 
-# @@D 17.10.13
-# Why a shell script?|
-#
-# Fetching an XML from zefix is as simple as a GET request -> curl is our
-# friend here. No need to rewrite the same functionality in its own program.
-# Also it's easy to randomize requests by time and origin (proxy) to hide
-# traces so that the Zefix server won't block the ip that is performing the
-# requests. One drawback is probably portability but, well, I can live with
-# this.
-# @@
-
 # The url format to be used to query a company's Handelsregister-Eintrag
 ZEFIX_URL="http://zh.powernet.ch/webservices/inet/hrg/hrg.asmx/getExcerpt?Chnr=%s&Amt=20&Lang=1"
 
