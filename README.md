@@ -13,9 +13,9 @@ zefxmx.sh   Convert a zefix xml (or a folder thereof) to json.
 
 Recommended workflow
 ---
-1) Fetch company ids with zefidx
-2) Retrieve Handelsregister-Einträge with zefxml
-3) Convert the xmls to json with zefxmx
+1. Fetch company ids with zefidx
+2. Retrieve Handelsregister-Einträge with zefxml
+3. Convert the xmls to json with zefxmx
 
 Team
 ---
