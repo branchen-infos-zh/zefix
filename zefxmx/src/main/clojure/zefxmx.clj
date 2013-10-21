@@ -28,7 +28,7 @@
         (.mkdirs))
     (with-open [wrtr (io/writer f)]
       (dorun
-       (map #(do (.write wrtr (str % "\n")))
+       (map #(do (.write wrtr (str %)))
             data)))))
 
 (defn- write-stdout
@@ -42,7 +42,8 @@
 
 (defn- ->json
   [data]
-  (ch/generate-string data))
+  ;; We really need to use streams here... we might process a whole lot of data here...
+  (ch/generate-string data));{:pretty true}))
 
 ;; The following function are a shortcut for enlive functions
 (defn- select
@@ -105,14 +106,11 @@
     out))
 
 (defn process-folder
-  [folder out-file]
+  [folder]
   (let [files (filter #(.endsWith (.getName %) "xml")
                         (file-seq (io/file folder)))
         data (->json (mapv #(process-file %)
                              files))]
-    (if out-file
-      (write-file data out-file)
-      (write-stdout data))
     data))
 
 (defn -main
@@ -127,6 +125,9 @@
              ["-h" "--help" "Shows this help" :flag true])]
     (cond
      (:help options) (println banner)
-     :else (process-folder (:i options)
-                           (:o options))))
-  (log/debug "Stopping zefxmx..."))
+     :else (let [out-file (:o options)
+                 json (process-folder (:i options))]
+             (if out-file
+                (write-file json out-file)
+                (write-stdout json))))
+    (log/debug "Stopping zefxmx...")))
