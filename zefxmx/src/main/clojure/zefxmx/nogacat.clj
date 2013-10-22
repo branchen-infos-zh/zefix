@@ -8,6 +8,8 @@
    [clojure.math.numeric-tower :as math]
    [clojure.contrib.string :as ccstring]))
 
+(def resource-name "/noga.json")
+
 (def ^:dynamic *noga-cat-2008*
   "Noga 2008 categories and textual keywords thereof. This is used
 to extract noga 2008 codes from natural text. The more keywords are provided
@@ -15,11 +17,16 @@ the better will the categorization work. If multiple noga code specifications
 use the same keywords the algorithm will choose the category that matches
 first."
   [{:code "code1"
-    :keywords ["marketing*" "sales" "verkauf"]}
+    :keywords ["marketing" "sales" "verkauf"]}
    {:code "code2"
     :keywords ["abc" "def"]}
    {:code "other"
     :keywords [".*"]}])
+
+(defn load-noga-from-resource
+  "Loads the noga code from a resource (json)."
+  [resource-name]
+  (clojure.java.io/resource resource-name))
 
 (defn compile-noga-cats
   "Compiles a list of noga specifications, that is its :keywords, into regular
