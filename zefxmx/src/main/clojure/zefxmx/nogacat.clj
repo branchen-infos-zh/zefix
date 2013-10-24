@@ -2,31 +2,12 @@
   (:require
    [clojure.tools.logging :as log]
    [clojure.java.io :as io]
+   [cheshire.core :as json]
    [clojure.pprint :as pp]
    [clojure.tools.cli :refer [cli]]
    [clojure.string :as str]
    [clojure.math.numeric-tower :as math]
    [clojure.contrib.string :as ccstring]))
-
-(def resource-name "/noga.json")
-
-(def ^:dynamic *noga-cat-2008*
-  "Noga 2008 categories and textual keywords thereof. This is used
-to extract noga 2008 codes from natural text. The more keywords are provided
-the better will the categorization work. If multiple noga code specifications
-use the same keywords the algorithm will choose the category that matches
-first."
-  [{:code "code1"
-    :keywords ["marketing" "sales" "verkauf"]}
-   {:code "code2"
-    :keywords ["abc" "def"]}
-   {:code "other"
-    :keywords [".*"]}])
-
-(defn load-noga-from-resource
-  "Loads the noga code from a resource (json)."
-  [resource-name]
-  (clojure.java.io/resource resource-name))
 
 (defn compile-noga-cats
   "Compiles a list of noga specifications, that is its :keywords, into regular
@@ -36,21 +17,39 @@ expression patterns."
                 (mapv re-pattern (:keywords %)))
         cats))
 
+(defn load-noga-from-resource
+  "Loads & compile noga code from a resource (json)."
+  [resource-name]
+  (let [r (clojure.java.io/resource resource-name)]
+    (when r
+      (compile-noga-cats
+       (json/parse-string (slurp r) true)))))
+
+(defn load-noga-from-file
+  [path]
+  (when path
+    (let [f (clojure.java.io/as-file path)]
+      (when (.exists f)
+        (compile-noga-cats
+         (json/parse-string (slurp f) true))))))
+
 (defn- remove-nil
   [s]
   (remove nil? s))
 
-;; TODO: This really needs some simplification. Can we use reduce here?
+(defn- match-keywords
+  "Matches spec's :keywords against text. In case a keyword matches, return
+the spec, otherwise nil."
+  [spec text]
+  (let [found (remove-nil (map #(re-find % text)
+                               (:keywords-compiled spec)))]
+    (when (not (empty? found))
+      (:code spec))))
+
 (defn noga-cat
   "Finds the first matching noga category for a given text."
-  [text noga-cats-compiled]
-  (:code
-   (first
-    (remove-nil
-     (map (fn [m]
-            (when (not (empty?
-                        (remove-nil
-                         (map #(re-find % text)
-                              (:keywords-compiled m)))))
-              m))
-          noga-cats-compiled)))))
+  [compiled-noga text]
+  (when (not (empty? text))
+    (vec (remove-nil
+          (map #(match-keywords % text)
+               compiled-noga)))))

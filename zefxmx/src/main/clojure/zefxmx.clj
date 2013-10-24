@@ -3,7 +3,7 @@
   (:require
    [zefxmx.nogacat :as n]
    [net.cgrand.enlive-html :as html]
-   [cheshire.core :as ch]
+   [cheshire.core :as json]
    [clojure.tools.logging :as log]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
@@ -12,8 +12,9 @@
    [clojure.math.numeric-tower :as math]
    [clojure.contrib.string :as ccstring]))
 
-(def noga-cats-compiled
-  (n/compile-noga-cats n/*noga-cat-2008*))
+(def ^:dynamic *noga-compiled*
+  "The noga categories. Defaults to noga.json loaded from the classpath."
+  (n/load-noga-from-resource "noga.json"))
 
 ;; Utility functions
 (defn- write-file
@@ -43,7 +44,7 @@
 (defn- ->json
   [data]
   ;; We really need to use streams here... we might process a whole lot of data here...
-  (ch/generate-string data));{:pretty true}))
+  (json/generate-string data));{:pretty true}))
 
 ;; The following function are a shortcut for enlive functions
 (defn- select
@@ -90,7 +91,7 @@
         inscr-date (inst-text-node xml :heading :inscriptionDate)
         purpose (inst-text-node xml :rubrics :purposes (child 1))
         addresses (extract-addresses xml)
-        noga (n/noga-cat purpose noga-cats-compiled)]
+        noga (n/noga-cat *noga-compiled* purpose)]
     {:comp-id comp-id
      :name name
      :legal-form legal-form
@@ -107,11 +108,23 @@
 
 (defn process-folder
   [folder]
-  (let [files (filter #(.endsWith (.getName %) "xml")
-                        (file-seq (io/file folder)))
-        data (->json (mapv #(process-file %)
-                             files))]
+  (let [files (filter #(and (.isFile %)
+                            (.endsWith (.getName %) "xml"))
+                      (file-seq (io/file folder)))
+        data (->json (vec (pmap #(process-file %)
+                                files)))]
     data))
+
+(defn- do-run
+  [dir out-file noga-file]
+  (let [data (if-let [noga-loaded (n/load-noga-from-file noga-file)]
+               (do (log/debug "Using user-provided noga file:" noga-file)
+                   (binding [*noga-compiled* noga-loaded]
+                     (process-folder dir)))
+               (process-folder dir))]
+    (if out-file
+      (write-file data out-file)
+      (write-stdout data))))
 
 (defn -main
   "Main application entry point."
@@ -122,12 +135,13 @@
              "Zefix xml to json converter."
              ["-i" "Directory that contains zefix company xmls to be processed."]
              ["-o" "File where to store the results. Defaults to stdout."]
+             ["-n" "File pointing to noga codes specifications (in json)."]
              ["-h" "--help" "Shows this help" :flag true])]
     (cond
      (:help options) (println banner)
-     :else (let [out-file (:o options)
-                 json (process-folder (:i options))]
-             (if out-file
-                (write-file json out-file)
-                (write-stdout json))))
-    (log/debug "Stopping zefxmx...")))
+     :else (do-run (:i options)
+                   (:o options)
+                   (:n options))))
+  (log/debug "Shutting down agents...")
+  (shutdown-agents)
+  (log/debug "Stopping zefxmx..."))
