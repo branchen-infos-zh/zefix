@@ -5,6 +5,16 @@ the zefix - Zentraler Firmenindex - webservice, the official swiss company
 registry, and convert them into JSON. This was developed as part of the
 Open Data hacknights in late 2013, see http://make.opendata.ch/wiki/project:biz.
 
+Dependencies
+---
+- java
+- leiningen, for installation instructions see https://github.com/technomancy/leiningen#installation
+- bash
+
+Building the apps
+---
+1. Make sure the leiningen is installed (see dependencies):
+
 Scripts
 ---
 - zefidx.sh   Retrieves company ids from the zefix webservice.

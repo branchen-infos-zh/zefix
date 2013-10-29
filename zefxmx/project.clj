@@ -8,6 +8,8 @@
                  [org.clojure/math.numeric-tower "0.0.2"]
                  [cheshire "5.2.0"]
 
+                 [clj-http "0.7.7"]
+
                  ;; Logging
                  [org.clojure/tools.logging "0.2.6"]
                  [ch.qos.logback/logback-classic "1.0.9"]]

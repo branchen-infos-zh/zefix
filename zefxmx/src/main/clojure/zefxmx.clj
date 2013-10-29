@@ -3,6 +3,7 @@
   (:require
    [zefxmx.nogacat :as n]
    [net.cgrand.enlive-html :as html]
+   [clj-http.client :as client]
    [cheshire.core :as json]
    [clojure.tools.logging :as log]
    [clojure.java.io :as io]
@@ -10,11 +11,18 @@
    [clojure.tools.cli :refer [cli]]
    [clojure.string :as str]
    [clojure.math.numeric-tower :as math]
-   [clojure.contrib.string :as ccstring]))
+   [clojure.contrib.string :as ccstring])
+
+  (:import
+   [java.net URLEncoder]))
 
 (def ^:dynamic *noga-compiled*
   "The noga categories. Defaults to noga.json loaded from the classpath."
   (n/load-noga-from-resource "noga.json"))
+
+(def ^:dynamic *geocode-url-format*
+  "The open street map geocode url."
+  "http://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&countrycodes=ch")
 
 ;; Utility functions
 (defn- write-file
@@ -46,6 +54,10 @@
   ;; We really need to use streams here... we might process a whole lot of data here...
   (json/generate-string data));{:pretty true}))
 
+(defn- json->
+  [json-str]
+  (json/parse-string json-str true))
+
 ;; The following function are a shortcut for enlive functions
 (defn- select
   [dom selector]
@@ -68,17 +80,46 @@
   [addr-node]
   (= "1" (get-in addr-node [:attrs :status])))
 
+(defn- geocode
+  [address-text]
+  (let [url (format *geocode-url-format* (URLEncoder/encode address-text))
+        resp (first (json-> (:body (client/get url))))]
+    (when resp
+      {:lat (:lat resp)
+       :lng (:lon resp)})))
+
+(defn- extract-address-date
+  [xml address-xml]
+  (let [ins (:ins (:attrs address-xml))
+        del (:del (:attrs address-xml))]
+    {:from (select xml [:instances
+                        :instance
+                        :citations
+                        (html/attr= :ref ins)
+                        :diary
+                        :date
+                        html/text])
+     :to (select xml [:instances
+                      :instance
+                      :citations
+                      (html/attr= :ref del)
+                      :diary
+                      :date
+                      html/text])}))
+
 (defn- extract-addresses
   [xml]
   (let [addresses (html/select xml [:instances :addresses :address])]
     (mapv (fn [xmlp]
-           {:text (select xmlp [:addressText html/text-node])
-            :street (select xmlp [:addressDetails :street html/text-node])
-            :street-no (select xmlp [:addressDetails :buildingNum html/text-node])
-            :zip (select xmlp [:addressDetails :zip html/text-node])
-            :city (select xmlp [:addressDetails :city html/text-node])
-            :current (current-addr? xmlp)
-            })
+            (let [text (select xmlp [:addressText html/text-node])]
+              {:text text
+               :street (select xmlp [:addressDetails :street html/text-node])
+               :street-no (select xmlp [:addressDetails :buildingNum html/text-node])
+               :zip (select xmlp [:addressDetails :zip html/text-node])
+               :city (select xmlp [:addressDetails :city html/text-node])
+               :current (current-addr? xmlp)
+               :coordinate (geocode text)
+               :date (extract-address-date xml xmlp)}))
          addresses)))
 
 (defn extract-xml-details
@@ -88,6 +129,7 @@
         comp-id (inst-text-node xml :heading :identification :CHNum)
         name (inst-text-node xml :rubrics :names (child 1) :native)
         legal-form (inst-text-node xml :heading :legalForm)
+        deletion-date (inst-text-node xml :heading :deletionDate)
         inscr-date (inst-text-node xml :heading :inscriptionDate)
         purpose (inst-text-node xml :rubrics :purposes (child 1))
         addresses (extract-addresses xml)
@@ -95,6 +137,7 @@
     {:comp-id comp-id
      :name name
      :legal-form legal-form
+     :deletion-date deletion-date
      :inscription-date inscr-date
      :purpose purpose
      :addresses addresses
