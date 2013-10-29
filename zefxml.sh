@@ -1,6 +1,7 @@
 #!/bin/sh
 #-x
 
+
 # The url format to be used to query a company's Handelsregister-Eintrag
 ZEFIX_URL="http://zh.powernet.ch/webservices/inet/hrg/hrg.asmx/getExcerpt?Chnr=%s&Amt=20&Lang=1"
 
