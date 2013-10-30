@@ -93,7 +93,7 @@
         {:lat (:lat resp)
          :lng (:lon resp)}))
     (catch Exception e
-      (log/error "Failed to enrich geo code." e))))
+      (log/error "Failed to geo code address." e))))
 
 (defn- extract-address-date
   [xml address-xml]
