@@ -20,9 +20,13 @@
   "The noga categories. Defaults to noga.json loaded from the classpath."
   (n/load-noga-from-resource "noga.json"))
 
+;; (def ^:dynamic *geocode-url-format*
+;;   "The open street map geocode url."
+;;   "http://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&countrycodes=ch")
+
 (def ^:dynamic *geocode-url-format*
-  "The open street map geocode url."
-  "http://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&countrycodes=ch")
+  "The (unlimited) geocode api."
+  "http://open.mapquestapi.com/nominatim/v1/search.php?format=json&q=%s&addressdetails=0&limit=1&countrycodes=ch")
 
 ;; Utility functions
 (defn- write-file
@@ -82,11 +86,14 @@
 
 (defn- geocode
   [address-text]
-  (let [url (format *geocode-url-format* (URLEncoder/encode address-text))
-        resp (first (json-> (:body (client/get url))))]
-    (when resp
-      {:lat (:lat resp)
-       :lng (:lon resp)})))
+  (try
+    (let [url (format *geocode-url-format* (URLEncoder/encode address-text))
+          resp (first (json-> (:body (client/get url))))]
+      (when resp
+        {:lat (:lat resp)
+         :lng (:lon resp)}))
+    (catch Exception e
+      (log/error "Failed to enrich geo code." e))))
 
 (defn- extract-address-date
   [xml address-xml]
@@ -134,6 +141,7 @@
         purpose (inst-text-node xml :rubrics :purposes (child 1))
         addresses (extract-addresses xml)
         noga (n/noga-cat *noga-compiled* purpose)]
+    (log/debug "Extracting details for" comp-id)
     {:comp-id comp-id
      :name name
      :legal-form legal-form
@@ -154,7 +162,10 @@
   (let [files (filter #(and (.isFile %)
                             (.endsWith (.getName %) "xml"))
                       (file-seq (io/file folder)))
-        data (->json (vec (pmap #(process-file %)
+        ;; We could use pmap here... the problem is that the
+        ;; geocoding host requires us to use a single thread
+        ;; as the ip might be blacklisted otherwise
+        data (->json (vec (map #(process-file %)
                                 files)))]
     data))
 
