@@ -33,7 +33,7 @@ Limitations
   see http://zefix.admin.ch/info/ger/zh020.htm.
 - The zefix server might block your ip if you query to much data. Bulk queries are not supported.
   This is especially true, when fetching xmls with `zefxml.sh`.
-- The geocoding will fail for the same reason as above: too many queries. This is though temporarily
+- The geocoding will fail for the same reason above: too many queries. This is though temporarily
   and can be retried at some point later.
   Question: Can we circumvent this issue by using http://open.mapquestapi.com/nominatim/, as there
   may not be any usage limit, or following
