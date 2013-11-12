@@ -47,9 +47,12 @@ the spec, otherwise nil."
       (:code spec))))
 
 (defn noga-cat
-  "Finds the first matching noga category for a given text."
+  "Finds all matching noga categories for a given text."
   [compiled-noga text]
-  (when (not (empty? text))
-    (vec (remove-nil
-          (map #(match-keywords % text)
-               compiled-noga)))))
+  (let [noga (when (not (empty? text))
+               (vec (remove-nil
+                      (map #(match-keywords % text)
+                        compiled-noga))))]
+    (or (and (empty? noga)
+          ["_"])
+      noga)))
